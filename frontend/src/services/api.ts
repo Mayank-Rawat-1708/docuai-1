@@ -1,8 +1,7 @@
 import axios from 'axios'
 
-const BASE = import.meta.env.VITE_API_URL
-  ? `${import.meta.env.VITE_API_URL}/api/v1`
-  : '/api/v1'
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'https://docuai-backend-64gk.onrender.com'
+const BASE = `${BACKEND_URL}/api/v1`
 
 const api = axios.create({
   baseURL: BASE,
@@ -49,7 +48,7 @@ export const documentsApi = {
   list: () => api.get('/documents/'),
   get: (id: number) => api.get(`/documents/${id}`),
   delete: (id: number) => api.delete(`/documents/${id}`),
-  streamUrl: (id: number) => `${import.meta.env.VITE_API_URL || ''}/api/v1/documents/${id}/stream`,
+  streamUrl: (id: number) => `${BACKEND_URL}/api/v1/documents/${id}/stream`,
 }
 
 export const chatApi = {
@@ -65,8 +64,7 @@ export const chatApi = {
     onDone: (timestamps: any[]) => void
   ) => {
     const token = localStorage.getItem('token')
-    const baseUrl = import.meta.env.VITE_API_URL || ''
-    const response = await fetch(`${baseUrl}/api/v1/chat/sessions/${sessionId}/messages`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/chat/sessions/${sessionId}/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
