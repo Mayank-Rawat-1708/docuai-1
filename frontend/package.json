@@ -1,0 +1,41 @@
+{
+  "name": "docuai-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.27.0",
+    "axios": "^1.7.7",
+    "react-dropzone": "^14.2.10",
+    "react-markdown": "^9.0.1",
+    "remark-gfm": "^4.0.0",
+    "react-syntax-highlighter": "^15.5.0",
+    "zustand": "^5.0.1",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.460.0",
+    "react-hot-toast": "^2.4.1",
+    "framer-motion": "^11.11.11"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.3",
+    "vite": "^5.4.10",
+    "typescript": "^5.6.3",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "@testing-library/react": "^16.0.1",
+    "@testing-library/jest-dom": "^6.6.1",
+    "vitest": "^2.1.4",
+    "@vitest/coverage-v8": "^2.1.4"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest"
+  }
+}
