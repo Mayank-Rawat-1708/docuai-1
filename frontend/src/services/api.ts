@@ -1,18 +1,20 @@
 import axios from 'axios'
 
+const BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api/v1`
+  : '/api/v1'
+
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: BASE,
   headers: { 'Content-Type': 'application/json' },
 })
 
-// Attach token to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
 
-// Handle 401
 api.interceptors.response.use(
   (r) => r,
   (err) => {
@@ -25,7 +27,6 @@ api.interceptors.response.use(
   }
 )
 
-// ─── Auth ───────────────────────────────────────────────────────────────────
 export const authApi = {
   register: (data: { email: string; username: string; password: string }) =>
     api.post('/auth/register', data),
@@ -34,7 +35,6 @@ export const authApi = {
   me: () => api.get('/auth/me'),
 }
 
-// ─── Documents ──────────────────────────────────────────────────────────────
 export const documentsApi = {
   upload: (file: File, onProgress?: (p: number) => void) => {
     const form = new FormData()
@@ -49,10 +49,9 @@ export const documentsApi = {
   list: () => api.get('/documents/'),
   get: (id: number) => api.get(`/documents/${id}`),
   delete: (id: number) => api.delete(`/documents/${id}`),
-  streamUrl: (id: number) => `/api/v1/documents/${id}/stream`,
+  streamUrl: (id: number) => `${import.meta.env.VITE_API_URL || ''}/api/v1/documents/${id}/stream`,
 }
 
-// ─── Chat ───────────────────────────────────────────────────────────────────
 export const chatApi = {
   createSession: (data: { title?: string; document_ids?: number[] }) =>
     api.post('/chat/sessions', data),
@@ -66,7 +65,8 @@ export const chatApi = {
     onDone: (timestamps: any[]) => void
   ) => {
     const token = localStorage.getItem('token')
-    const response = await fetch(`/api/v1/chat/sessions/${sessionId}/messages`, {
+    const baseUrl = import.meta.env.VITE_API_URL || ''
+    const response = await fetch(`${baseUrl}/api/v1/chat/sessions/${sessionId}/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
