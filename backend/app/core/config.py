@@ -25,7 +25,12 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE_MB: int = 100
 
     # CORS
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:80", "http://frontend:3000"]
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:3000",
+        "http://localhost:80",
+        "http://frontend:3000",
+        "https://docuai-frontend.onrender.com",
+    ]
 
     # Vector store
     VECTOR_STORE_PATH: str = "/app/vector_store"
