@@ -1,0 +1,80 @@
+# render.yaml — Render Blueprint
+# Defines all services for this project.
+# To use: push this file to your repo root, then in Render dashboard
+# click "New > Blueprint" and select your repo.
+#
+# AFTER creating services, manually set these secret env vars in Render:
+#   Backend service:
+#     OPENAI_API_KEY  = sk-...
+#     SECRET_KEY      = (generate: python -c "import secrets; print(secrets.token_hex(32))")
+#   Frontend service:
+#     VITE_API_URL    = https://<your-backend-service-name>.onrender.com
+
+services:
+  # ── Backend (FastAPI) ─────────────────────────────────────────────────────
+  - type: web
+    name: docuai-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free          # change to "starter" for always-on
+    healthCheckPath: /api/v1/health
+
+    envVars:
+      # ⚠️ Set these manually in Render dashboard (do NOT commit real values):
+      - key: OPENAI_API_KEY
+        sync: false     # prompts for value in dashboard
+      - key: SECRET_KEY
+        sync: false
+
+      # Database — auto-filled when linked to Render Postgres below
+      - key: DATABASE_URL
+        fromDatabase:
+          name: docuai-db
+          property: connectionString
+
+      # CORS — must include your frontend's Render URL
+      - key: CORS_ORIGINS_JSON
+        value: '["https://docuai-frontend.onrender.com","http://localhost:3000"]'
+
+      # Redis — disable if not using a Redis instance
+      - key: REDIS_ENABLED
+        value: "false"   # set to "true" and add REDIS_URL if you add Redis
+
+      # Storage dirs — point to Persistent Disk mount
+      - key: UPLOAD_DIR
+        value: /data/uploads
+      - key: VECTOR_STORE_DIR
+        value: /data/vector_store
+
+      - key: DEBUG
+        value: "false"
+
+    disk:
+      name: docuai-storage
+      mountPath: /data
+      sizeGB: 1         # 1 GB free persistent disk
+
+  # ── Frontend (React + Nginx) ──────────────────────────────────────────────
+  - type: web
+    name: docuai-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    plan: free
+
+    envVars:
+      # VITE_API_URL is passed as a Docker build ARG — must be set here
+      - key: VITE_API_URL
+        value: https://docuai-backend.onrender.com   # update to your real backend URL
+
+      # nginx proxy_pass target (same as above, for runtime nginx config)
+      - key: BACKEND_URL
+        value: https://docuai-backend.onrender.com
+
+# ── Managed PostgreSQL ────────────────────────────────────────────────────────
+databases:
+  - name: docuai-db
+    plan: free           # Render free Postgres (expires after 90 days — upgrade for prod)
+    databaseName: docuai
+    user: docuai
