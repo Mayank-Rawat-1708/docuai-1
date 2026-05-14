@@ -10,7 +10,7 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.user import User
 from app.models.document import Document, FileType, ProcessingStatus
-from app.services.document_service import save_uploaded_file, process_pdf, process_audio_video
+from app.services.document_service import save_upload, process_document
 from app.core.config import settings
 
 router = APIRouter()
@@ -41,10 +41,7 @@ async def process_document_background(document_id: int, file_path: str, file_typ
         await db.commit()
         
         try:
-            if file_type == FileType.PDF:
-                result = await process_pdf(document_id, file_path, filename)
-            else:
-                result = await process_audio_video(document_id, file_path, filename)
+            result = await process_document(document_id, file_path, file_type.value)
             
             doc.status = ProcessingStatus(result["status"]) if result["status"] in ["completed", "failed"] else ProcessingStatus.COMPLETED
             doc.extracted_text = result.get("extracted_text")
@@ -91,15 +88,18 @@ async def upload_document(
     if size_mb > settings.MAX_FILE_SIZE_MB:
         raise HTTPException(status_code=400, detail=f"File too large. Max size: {settings.MAX_FILE_SIZE_MB}MB")
     
-    file_type = ALLOWED_EXTENSIONS[ext]
-    file_path, unique_name = await save_uploaded_file(content, file.filename)
+    # We must seek to 0 because we just read it
+    await file.seek(0)
+    
+    file_path, file_type_str, file_size = await save_upload(file)
+    file_type_enum = FileType(file_type_str)
     
     doc = Document(
         user_id=current_user.id,
-        filename=unique_name,
+        filename=os.path.basename(file_path),
         original_filename=file.filename,
-        file_type=file_type,
-        file_size=len(content),
+        file_type=file_type_enum,
+        file_size=file_size,
         mime_type=file.content_type,
         file_path=file_path,
         status=ProcessingStatus.PENDING,
@@ -110,7 +110,7 @@ async def upload_document(
     
     background_tasks.add_task(
         process_document_background,
-        doc.id, file_path, file_type, file.filename
+        doc.id, file_path, file_type_str, file.filename
     )
     
     return {"message": "Document uploaded successfully", "document": document_to_dict(doc)}
